@@ -1,21 +1,31 @@
 const store = {
   items: [
-    { id: cuid(), name: 'apples', checked: false },
-    { id: cuid(), name: 'oranges', checked: false },
-    { id: cuid(), name: 'milk', checked: true },
-    { id: cuid(), name: 'bread', checked: false }
+    { id: cuid(), name: 'apples', checked: false, editing: false},
+    { id: cuid(), name: 'oranges', checked: false, editing: false},
+    { id: cuid(), name: 'milk', checked: true, editing: false},
+    { id: cuid(), name: 'bread', checked: false, editing: false}
   ],
   hideCheckedItems: false
+  //editListItems: false
 };
 
 const generateItemElement = function (item) {
   let itemTitle = `<span class='shopping-item shopping-item__checked'>${item.name}</span>`;
+  let formForEditing = '';
   if (!item.checked) {
     itemTitle = `
      <span class='shopping-item'>${item.name}</span>
     `;
   }
+  if (item.editing) {
+     formForEditing =  
+    `<form class="js-edit-form edit-form">
+    <input type="text" class="form-that-were-editing" value=${item.name}>
+    <button type="submit">Submit</button>
+  </form>`
+  }
 
+  /* add edit button line 31*/
   return `
     <li class='js-item-element' data-item-id='${item.id}'>
       ${itemTitle}
@@ -26,9 +36,20 @@ const generateItemElement = function (item) {
         <button class='shopping-item-delete js-item-delete'>
           <span class='button-label'>delete</span>
         </button>
+        <button class='shopping-item-edit js-item-edit'>
+        <span class='button-label'>edit</span>
+      </button>
+      ${formForEditing}
       </div>
     </li>`;
 };
+
+
+
+
+   
+ 
+
 
 const generateShoppingItemsString = function (shoppingList) {
   const items = shoppingList.map((item) => generateItemElement(item));
@@ -95,6 +116,7 @@ const getItemIdFromElement = function (item) {
     .data('item-id');
 };
 
+
 /**
  * Responsible for deleting a list item.
  * @param {string} id 
@@ -127,6 +149,51 @@ const handleDeleteItemClicked = function () {
   });
 };
 
+// MY CODE HERE -> 
+
+// //function for when I submit the edit button
+const handleEditItemSubmit = function () {
+  $('.js-shopping-list').on('submit', '.js-edit-form', function (event) {
+    event.preventDefault();
+    let entry = $('.form-that-were-editing').val();
+    let id = getItemIdFromElement(event.currentTarget)
+    for (i = 0; i < store.items.length; i++) {
+      if (store.items[i].id === id) {
+        store.items[i].name = entry;
+      }
+    }
+      toggleEditButton(event.currentTarget);
+      render()
+  })
+}
+
+//helper function
+const toggleEditButton = function (target) {
+  let id = getItemIdFromElement(target)
+
+  for (let i = 0; i < store.items.length; i++) {
+    if (store.items[i].id === id) {
+      store.items[i].editing = !store.items[i].editing;
+    }
+  }
+}
+
+//function for when I click edit button
+const handleEditButtonClicked = function () {
+//event handler to listen for button clicked 
+  $('.js-shopping-list').on('click', '.js-item-edit', function (event) {
+    for (let i = 0; i < store.items.length; i++) {
+      store.items[i].editing = false;
+    }
+
+    toggleEditButton(event.currentTarget)
+  render()
+  })
+}
+
+
+
+
 /**
  * Toggles the store.hideCheckedItems property
  */
@@ -157,9 +224,12 @@ const handleToggleFilterClick = function () {
 const handleShoppingList = function () {
   render();
   handleNewItemSubmit();
-  handleItemCheckClicked();
+  // add edit functions to list
+  handleEditButtonClicked();
+  handleEditItemSubmit();
   handleDeleteItemClicked();
   handleToggleFilterClick();
+  handleItemCheckClicked();
 };
 
 // when the page loads, call `handleShoppingList`
